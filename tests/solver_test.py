@@ -5,6 +5,7 @@ from typing import List
 from tests.sudoku_fixture import SudokuFixture
 
 from sudoku.matrix import Matrix
+from sudoku.matrix_loader import BasicMatrixLoader
 from sudoku.solver import Solver
 
 
@@ -12,13 +13,13 @@ class TestSolver(SudokuFixture):
 
     def setUp(self):
         super().setUp()
-        self.problem_easy: Matrix = Matrix(deepcopy(self.problem_2d_easy))
-        self.answer_easy: Matrix = Matrix(deepcopy(self.answer_2d_easy))
-        self.problem_hard: Matrix = Matrix(deepcopy(self.problem_2d_hard))
-        self.answer_hard: Matrix = Matrix(deepcopy(self.answer_2d_hard))
-        self.problem_ash: Matrix = Matrix(deepcopy(self.problem_2d_ash))
-        self.answer_ash: Matrix = Matrix(deepcopy(self.answer_2d_ash))
-        self.problem_wrong: Matrix = Matrix(deepcopy(self.problem_2d_wrong))
+        self.problem_easy: Matrix = BasicMatrixLoader(self.problem_2d_easy).load()
+        self.answer_easy: Matrix = BasicMatrixLoader(self.answer_2d_easy).load()
+        self.problem_hard: Matrix = BasicMatrixLoader(self.problem_2d_hard).load()
+        self.answer_hard: Matrix = BasicMatrixLoader(self.answer_2d_hard).load()
+        self.problem_ash: Matrix = BasicMatrixLoader(self.problem_2d_ash).load()
+        self.answer_ash: Matrix = BasicMatrixLoader(self.answer_2d_ash).load()
+        self.problem_wrong: Matrix = BasicMatrixLoader(self.problem_2d_wrong).load()
 
     def test_solve_easy(self):
         solver: Solver = Solver(problem=self.problem_easy)

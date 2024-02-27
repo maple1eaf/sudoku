@@ -12,7 +12,17 @@ Features:
 ```python
 import sudoku
 
-problem: sudoku.Matrix = sudoku.Matrix(matrix=CUSTOM_PROBLEM)
+matrix: List[List[int]] = ...
+
+problem: sudoku.Matrix = sudoku.Matrix(matrix=matrix)
+solver: sudoku.Solver = sudoku.Solver(problem=problem)
+solver.solve()
+
+# or from basic loader
+problem_loader: sudoku.MatrixLoader = sudoku.BasicMatrixLoader(
+    matrix=matrix
+)
+problem: sudoku.Matrix = problem_loader.load()
 solver: sudoku.Solver = sudoku.Solver(problem=problem)
 solver.solve()
 ```
