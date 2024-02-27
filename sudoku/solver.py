@@ -1,11 +1,13 @@
 import operator
-import time
 from typing import List
 
 from sudoku.matrix import IntMatrix, Matrix
 
 
 class Solver:
+    """
+    Sudoku problem solver.
+    """
 
     def __init__(self, problem: Matrix):
         self.problem: Matrix = problem
