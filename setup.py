@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-with open("README.md", "r", encoding='utf-8') as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
@@ -12,5 +12,8 @@ setup(
     packages=find_packages(exclude=["tests"]),
     license="GPL",
     python_requires=">=3.8",
+    install_requires=[
+        "opencv-python",
+    ],
     entry_points={"console_scripts": ["sudoku = sudoku.__main__:main"]},
 )
