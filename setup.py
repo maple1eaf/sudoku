@@ -13,7 +13,7 @@ setup(
     license="GPL",
     python_requires=">=3.8",
     install_requires=[
-        "opencv-python",
+        "opencv-python>=4.9.0.80",
     ],
     entry_points={"console_scripts": ["sudoku = sudoku.__main__:main"]},
 )
