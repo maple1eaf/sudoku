@@ -10,6 +10,9 @@ from sudoku.matrix import IntMatrix, Matrix
 
 class MatrixLoader(ABC):
 
+    def __init__(self):
+        self.loaded_matrix: Union[Matrix, None] = None
+
     @abstractmethod
     def load(self) -> Matrix:
         pass
@@ -21,10 +24,12 @@ class BasicMatrixLoader(MatrixLoader):
     """
 
     def __init__(self, matrix: IntMatrix):
+        super().__init__()
         self.matrix: IntMatrix = matrix
 
     def load(self) -> Matrix:
-        return Matrix(deepcopy(self.matrix))
+        self.loaded_matrix = Matrix(deepcopy(self.matrix))
+        return self.loaded_matrix
 
 
 class ImageMatrixLoader(MatrixLoader):
