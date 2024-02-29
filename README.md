@@ -7,23 +7,46 @@ Features:
 
 ## Package Usage
 
-### Solve a Sudoku
+### Load a Sudoku puzzle
+
+#### load from integer matrix
 
 ```python
 import sudoku
 
 matrix: List[List[int]] = ...
 
-problem: sudoku.Matrix = sudoku.Matrix(matrix=matrix)
-solver: sudoku.Solver = sudoku.Solver(problem=problem)
-solver.solve()
-
-# or from basic loader
-problem_loader: sudoku.MatrixLoader = sudoku.BasicMatrixLoader(
+puzzle_loader: sudoku.MatrixLoader = sudoku.BasicMatrixLoader(
     matrix=matrix
 )
-problem: sudoku.Matrix = problem_loader.load()
-solver: sudoku.Solver = sudoku.Solver(problem=problem)
+puzzle: sudoku.Matrix = puzzle_loader.load()
+
+# or
+puzzle: sudoku.Matrix = sudoku.Matrix(matrix=matrix)
+```
+
+#### load from image
+
+```python
+import sudoku
+
+img_buffer: bytes = ...
+model: tf.keras.Model = ...
+
+loader: sudoku.ImageMatrixLoader = sudoku.ImageMatrixLoader(
+    img_buffer=img_buffer, model=model
+)
+puzzle: sudoku.Matrix = loader.load()
+```
+
+### Solve a Sudoku puzzle
+
+```python
+import sudoku
+
+puzzle: sudoku.Matrix = ...
+
+solver: sudoku.Solver = sudoku.Solver(puzzle=puzzle)
 solver.solve()
 ```
 

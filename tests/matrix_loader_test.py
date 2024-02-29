@@ -12,12 +12,12 @@ from sudoku.matrix_loader import BasicMatrixLoader, ImageMatrixLoader, MatrixLoa
 class TestBasicMatrixLoader(SudokuFixture):
 
     def test_load(self):
-        matrix_loader: MatrixLoader = BasicMatrixLoader(matrix=self.problem_2d_easy)
+        matrix_loader: MatrixLoader = BasicMatrixLoader(matrix=self.puzzle_2d_easy)
         matrix: Matrix = matrix_loader.load()
-        self.assertNotEquals(id(matrix.matrix), id(self.problem_2d_easy))
+        self.assertNotEquals(id(matrix.matrix), id(self.puzzle_2d_easy))
         print(matrix)
         print("-------------------")
-        print(self.problem_2d_easy)
+        print(self.puzzle_2d_easy)
 
 
 class TestImageMatrixLoader(unittest.TestCase):

@@ -7,7 +7,7 @@ class SudokuFixture(unittest.TestCase):
 
     def setUp(self):
         # easy level，logically get answer
-        self.problem_2d_easy: IntMatrix = [
+        self.puzzle_2d_easy: IntMatrix = [
             [3, 7, 0, 0, 1, 9, 0, 4, 8],
             [0, 0, 8, 0, 4, 0, 0, 2, 0],
             [0, 0, 5, 0, 8, 0, 0, 0, 0],
@@ -30,7 +30,7 @@ class SudokuFixture(unittest.TestCase):
             [2, 6, 1, 3, 9, 5, 4, 8, 7],
         ]
         # hard leve, need recursively try
-        self.problem_2d_hard: IntMatrix = [
+        self.puzzle_2d_hard: IntMatrix = [
             [0, 8, 0, 0, 0, 5, 0, 0, 0],
             [0, 0, 0, 8, 0, 0, 0, 0, 2],
             [0, 0, 9, 0, 2, 0, 7, 0, 0],
@@ -53,7 +53,7 @@ class SudokuFixture(unittest.TestCase):
             [8, 2, 4, 7, 1, 6, 5, 9, 3],
         ]
         # ash level
-        self.problem_2d_ash: IntMatrix = [
+        self.puzzle_2d_ash: IntMatrix = [
             [0, 4, 2, 0, 9, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 5, 0, 7, 3],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -76,7 +76,7 @@ class SudokuFixture(unittest.TestCase):
             [7, 5, 8, 9, 1, 4, 3, 6, 2],
         ]
         # wrong sudoku
-        self.problem_2d_wrong: IntMatrix = [
+        self.puzzle_2d_wrong: IntMatrix = [
             [0, 1, 0, 0, 0, 3, 0, 8, 9],
             [0, 0, 0, 0, 9, 0, 0, 0, 6],
             [6, 0, 0, 5, 0, 0, 0, 7, 0],

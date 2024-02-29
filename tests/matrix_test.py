@@ -8,7 +8,7 @@ from sudoku.matrix import Matrix
 class TestMatrix(SudokuFixture):
 
     def test_repr(self):
-        matrix: Matrix = Matrix(self.problem_2d_easy)
+        matrix: Matrix = Matrix(self.puzzle_2d_easy)
         print(matrix)
         self.assertEqual(
             repr(matrix),

@@ -9,13 +9,13 @@ class Solver:
     Sudoku problem solver.
     """
 
-    def __init__(self, problem: Matrix):
-        self.problem: Matrix = problem
+    def __init__(self, puzzle: Matrix):
+        self.puzzle: Matrix = puzzle
         self.answer: Matrix = None
 
     def solve(self) -> bool:
-        flatten_problem: List[int] = [num for row in self.problem.matrix for num in row]
-        is_solved, flatten_answer = sudokusolve(flatten_problem)
+        flatten_puzzle: List[int] = [num for row in self.puzzle.matrix for num in row]
+        is_solved, flatten_answer = sudokusolve(flatten_puzzle)
         if is_solved:
             answer_2d: IntMatrix = [flatten_answer[9 * i : 9 * i + 9] for i in range(9)]
             self.answer = Matrix(answer_2d)
