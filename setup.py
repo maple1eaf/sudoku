@@ -12,8 +12,6 @@ setup(
     packages=find_packages(exclude=["tests"]),
     license="GPL",
     python_requires=">=3.8",
-    install_requires=[
-        "opencv-python>=4.9.0.80",
-    ],
+    install_requires=["opencv-python>=4.9.0.80", "tensorflow>=2.13.1"],
     entry_points={"console_scripts": ["sudoku = sudoku.__main__:main"]},
 )

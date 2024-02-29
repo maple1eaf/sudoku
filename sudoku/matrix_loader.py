@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from math import ceil
 from typing import List, Tuple, Union
 
 import cv2
 import numpy as np
+import tensorflow as tf
 
+from sudoku.config import CELL_DIGIT_OCCUPATION_PERCENTAGE
 from sudoku.matrix import IntMatrix, Matrix
+from sudoku.utils import euclidian_distance, show_image
 
 
 class MatrixLoader(ABC):
@@ -37,8 +41,12 @@ class ImageMatrixLoader(MatrixLoader):
     Load a matrix from an image.
     """
 
-    def __init__(self, img_buffer):
-        self.img_buffer = img_buffer
+    def __init__(self, img_buffer: bytes, model: tf.keras.Model):
+        super().__init__()
+        self.img_buffer: bytes = img_buffer
+        self.model: tf.keras.Model = (
+            model  # tensorflow digit recognization model for 28*28 gray image
+        )
 
         self.original_img: Union[cv2.typing.MatLike, None] = None
         self.gray_img: Union[cv2.UMat, None] = None
@@ -50,6 +58,11 @@ class ImageMatrixLoader(MatrixLoader):
         self.sudoku_img: Union[cv2.UMat, None] = None
         self.resized_sudoku_img: Union[cv2.UMat, None] = None
 
+        self._cell_border_mask: Union[np.array, None] = None
+        self._predicted_matrix: List[List[int]] = [
+            [0 for col in range(9)] for row in range(9)
+        ]
+
     def load(self) -> Matrix:
         # Read the image from memory
         self.original_img = cv2.imdecode(
@@ -59,13 +72,14 @@ class ImageMatrixLoader(MatrixLoader):
 
         # extract sudoku image
         self._decide_contours()
-        self._transform_to_aerial_perspective(image=self.original_img)
+        self._transform_to_aerial_perspective(image=self.thresholded_img)
 
-        self.resized_sudoku_img = cv2.resize(
-            src=self.sudoku_img, dsize=(250, 250), interpolation=cv2.INTER_AREA
-        )
+        # use model to predict cell digits and generate matrix
+        self._extract_digits()
 
-        # ImageMatrixLoader.show_image(self.resized_sudoku_img)
+        self.loaded_matrix = Matrix(deepcopy(self._predicted_matrix))
+
+        return self.loaded_matrix
 
     def _decide_contours(self) -> None:
         """
@@ -78,8 +92,9 @@ class ImageMatrixLoader(MatrixLoader):
         4. sort contours by the area. the biggest contour should refer to sudoku.
         5. get a approximated sudoku contour with 4 points referring to the 4 corners of the sudoku.
         """
-        self.blurred_img = cv2.GaussianBlur(self.gray_img, (7, 7), 3)
-        # self.blurred_img = cv2.medianBlur(self.gray_img, 3)
+        self.blurred_img = cv2.GaussianBlur(
+            src=self.gray_img, ksize=(21, 21), sigmaX=4, borderType=cv2.BORDER_WRAP
+        )
 
         # https://docs.opencv.org/4.9.0/d7/d4d/tutorial_py_thresholding.html
         self.thresholded_img = cv2.adaptiveThreshold(
@@ -161,27 +176,94 @@ class ImageMatrixLoader(MatrixLoader):
         top_left, buttom_left, buttom_right, top_right = self.ordered_contour_corners
         max_width = max(
             [
-                ImageMatrixLoader.euclidian_distance(top_left, top_right),
-                ImageMatrixLoader.euclidian_distance(buttom_left, buttom_right),
+                euclidian_distance(top_left, top_right),
+                euclidian_distance(buttom_left, buttom_right),
             ]
         )
         max_height = max(
             [
-                ImageMatrixLoader.euclidian_distance(top_left, buttom_left),
-                ImageMatrixLoader.euclidian_distance(top_right, buttom_right),
+                euclidian_distance(top_left, buttom_left),
+                euclidian_distance(top_right, buttom_right),
             ]
         )
         return (max_width, max_height)
 
-    @staticmethod
-    def euclidian_distance(point1: np.array, point2: np.array):
-        # Calcuates the euclidian distance between the point1 and point2
-        return np.linalg.norm(point1 - point2)
+    def _extract_digits(self) -> None:
+        self.resized_sudoku_img = cv2.resize(
+            src=self.sudoku_img, dsize=(270, 540), interpolation=cv2.INTER_AREA
+        )
 
-    @staticmethod
-    def show_image(image):
-        cv2.namedWindow("Image")
-        cv2.moveWindow("Image", 40, 30)
-        cv2.imshow("Image", image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        step_width = self.resized_sudoku_img.shape[1] // 9
+        step_height = self.resized_sudoku_img.shape[0] // 9
+
+        # generate a mask to remove cell border, % of the cell width or height is border
+        self._cell_border_mask = np.zeros(
+            shape=(step_height, step_width), dtype=np.uint8
+        )
+        SIDE_BORDER_PERCENTAGE = 0.1
+        border_width: int = ceil(step_width * SIDE_BORDER_PERCENTAGE)
+        border_height: int = ceil(step_height * SIDE_BORDER_PERCENTAGE)
+        self._cell_border_mask[
+            border_height : (step_height - border_height),
+            border_width : (step_width - border_width),
+        ] = 255  # 1111 1111
+
+        for row in range(9):
+            for col in range(9):
+                # (width, height)
+                cell_top_left = (step_width * col, step_height * row)
+                cell_buttom_right = (step_width * (col + 1), step_height * (row + 1))
+                cell: cv2.UMat = self.resized_sudoku_img[
+                    cell_top_left[1] : cell_buttom_right[1],
+                    cell_top_left[0] : cell_buttom_right[0],
+                ]
+                pure_cell: Union[cv2.UMat, None] = self._purify_cell(cell=cell)
+                if pure_cell is None:
+                    continue
+                predicted_digit: int = self._predict_digit_in_cell(cell=pure_cell)
+                self._predicted_matrix[row][col] = predicted_digit
+
+    def _purify_cell(self, cell: cv2.typing.MatLike) -> Union[cv2.UMat, None]:
+        threshed_cell = cv2.threshold(
+            src=cell, thresh=127, maxval=255, type=cv2.THRESH_BINARY
+        )[1]
+
+        # remove border by using mask
+        unborderd_threshed_cell = cv2.bitwise_and(
+            src1=threshed_cell, src2=threshed_cell, mask=self._cell_border_mask
+        )
+        contours, hierarchy = cv2.findContours(
+            image=unborderd_threshed_cell.copy(),
+            mode=cv2.RETR_EXTERNAL,
+            method=cv2.CHAIN_APPROX_SIMPLE,
+        )
+        # if no contour found, the cell is empty
+        if len(contours) == 0:
+            return None
+        digit_contour: cv2.UMat = max(contours, key=cv2.contourArea)
+        cell_digit_mask: cv2.UMat = np.zeros(threshed_cell.shape, dtype=np.uint8)
+        # thickness=-1 will fill the contour
+        cell_digit_mask = cv2.drawContours(
+            image=cell_digit_mask,
+            contours=[digit_contour],
+            contourIdx=0,
+            color=255,
+            thickness=-1,
+        )
+
+        # consider low filled% as noise and ignore as empty cell
+        filled_percentage: float = cv2.countNonZero(src=cell_digit_mask) / float(
+            cell_digit_mask.shape[0] * cell_digit_mask.shape[1]
+        )
+        if filled_percentage < CELL_DIGIT_OCCUPATION_PERCENTAGE:
+            return None
+
+        pure_cell: cv2.UMat = cv2.bitwise_and(unborderd_threshed_cell, cell_digit_mask)
+        return pure_cell
+
+    def _predict_digit_in_cell(self, cell: cv2.UMat) -> int:
+        resized_cell = cv2.resize(cell, (28, 28))
+        resized_cell = resized_cell.astype(np.float32) / 255.0
+        model_input = resized_cell.reshape(-1, 28, 28, 1)
+        predicted_digit: int = self.model.predict(model_input, verbose=0).argmax(axis=1)[0]
+        return predicted_digit

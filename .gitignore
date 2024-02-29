@@ -99,3 +99,8 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# tensorflow model
+*.tf_model/
+*.h5
+!tests/resources/*

@@ -9,3 +9,5 @@ CUSTOM_PROBLEM = [
     [0, 0, 8, 5, 0, 0, 0, 1, 0],
     [0, 9, 0, 0, 0, 0, 4, 0, 0],
 ]
+
+CELL_DIGIT_OCCUPATION_PERCENTAGE = 0.03
