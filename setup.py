@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="sudoku",
-    version="0.2.0",
+    version="0.2.1",
     description="Sudoku",
     long_description=long_description,
     author="markduan",

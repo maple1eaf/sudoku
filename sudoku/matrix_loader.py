@@ -55,9 +55,13 @@ class ImageMatrixLoader(MatrixLoader):
         self.sudoku_contour: Union[cv2.UMat, None] = None
         self.ordered_contour_corners: Union[np.array, None] = None
         self.ordered_tf_contour_corners: Union[np.array, None] = None
+        self.transformation_matrix: Union[cv2.typing.MatLike, None] = None
         self.sudoku_img: Union[cv2.UMat, None] = None
+        self.sudoku_img_from_original: Union[cv2.UMat, None] = None
         self.resized_sudoku_img: Union[cv2.UMat, None] = None
 
+        self._tf_width: Union[float, None] = None
+        self._tf_height: Union[float, None] = None
         self._cell_border_mask: Union[np.array, None] = None
         self._predicted_matrix: List[List[int]] = [
             [0 for col in range(9)] for row in range(9)
@@ -73,6 +77,11 @@ class ImageMatrixLoader(MatrixLoader):
         # extract sudoku image
         self._decide_contours()
         self._transform_to_aerial_perspective(image=self.thresholded_img)
+        self.sudoku_img_from_original = cv2.warpPerspective(
+            src=self.original_img,
+            M=self.transformation_matrix,
+            dsize=(int(self._tf_width), int(self._tf_height)),
+        )
 
         # use model to predict cell digits and generate matrix
         self._extract_digits()
@@ -137,13 +146,17 @@ class ImageMatrixLoader(MatrixLoader):
             ],
             dtype=np.float32,
         )
+        self._tf_width = tf_width
+        self._tf_height = tf_height
 
-        transformation_matrix: cv2.typing.MatLike = cv2.getPerspectiveTransform(
+        self.transformation_matrix = cv2.getPerspectiveTransform(
             src=self.ordered_contour_corners, dst=self.ordered_tf_contour_corners
         )
         # transform the image
         self.sudoku_img = cv2.warpPerspective(
-            src=image, M=transformation_matrix, dsize=(int(tf_width), int(tf_height))
+            src=image,
+            M=self.transformation_matrix,
+            dsize=(int(tf_width), int(tf_height)),
         )
 
     def _organize_corners(self) -> None:
@@ -265,5 +278,7 @@ class ImageMatrixLoader(MatrixLoader):
         resized_cell = cv2.resize(cell, (28, 28))
         resized_cell = resized_cell.astype(np.float32) / 255.0
         model_input = resized_cell.reshape(-1, 28, 28, 1)
-        predicted_digit: int = self.model.predict(model_input, verbose=0).argmax(axis=1)[0]
+        predicted_digit: int = self.model.predict(model_input, verbose=0).argmax(
+            axis=1
+        )[0]
         return predicted_digit
