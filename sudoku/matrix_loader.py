@@ -57,7 +57,7 @@ class ImageMatrixLoader(MatrixLoader):
         self.ordered_tf_contour_corners: Union[np.array, None] = None
         self.transformation_matrix: Union[cv2.typing.MatLike, None] = None
         self.sudoku_img: Union[cv2.UMat, None] = None
-        self.sudoku_img_from_original: Union[cv2.UMat, None] = None
+        self.sudoku_binary_from_original: Union[bytes, None] = None
         self.resized_sudoku_img: Union[cv2.UMat, None] = None
 
         self._tf_width: Union[float, None] = None
@@ -77,11 +77,8 @@ class ImageMatrixLoader(MatrixLoader):
         # extract sudoku image
         self._decide_contours()
         self._transform_to_aerial_perspective(image=self.thresholded_img)
-        self.sudoku_img_from_original = cv2.warpPerspective(
-            src=self.original_img,
-            M=self.transformation_matrix,
-            dsize=(int(self._tf_width), int(self._tf_height)),
-        )
+
+        self._generate_sudoku_jpg_image_binary()
 
         # use model to predict cell digits and generate matrix
         self._extract_digits()
@@ -282,3 +279,14 @@ class ImageMatrixLoader(MatrixLoader):
             axis=1
         )[0]
         return predicted_digit
+
+    def _generate_sudoku_jpg_image_binary(self) -> None:
+        sudoku_img_from_original: cv2.UMat = cv2.warpPerspective(
+            src=self.original_img,
+            M=self.transformation_matrix,
+            dsize=(int(self._tf_width), int(self._tf_height)),
+        )
+        # convert UMat to binary
+        self.sudoku_binary_from_original = cv2.imencode(
+            ext=".jpg", img=sudoku_img_from_original
+        )[1].tobytes()
