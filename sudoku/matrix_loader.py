@@ -11,6 +11,10 @@ from sudoku.config import CELL_DIGIT_OCCUPATION_PERCENTAGE
 from sudoku.matrix import IntMatrix, Matrix
 from sudoku.utils import euclidian_distance, show_image
 
+ADAPTIVE_THRESHOLD_BLOCK_SIZE: int = 29
+
+print(f"{ADAPTIVE_THRESHOLD_BLOCK_SIZE=}")
+
 
 class MatrixLoader(ABC):
 
@@ -108,7 +112,7 @@ class ImageMatrixLoader(MatrixLoader):
             maxValue=255,
             adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             thresholdType=cv2.THRESH_BINARY_INV,
-            blockSize=29,
+            blockSize=ADAPTIVE_THRESHOLD_BLOCK_SIZE,
             C=3,
         )
 
