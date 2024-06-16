@@ -108,7 +108,7 @@ class ImageMatrixLoader(MatrixLoader):
             maxValue=255,
             adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             thresholdType=cv2.THRESH_BINARY_INV,
-            blockSize=11,
+            blockSize=29,
             C=3,
         )
 
